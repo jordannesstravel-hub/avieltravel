@@ -1,119 +1,109 @@
-import i18n from "@/lib/i18n.json";
 import { supabasePublic } from "@/lib/supabase";
 import Link from "next/link";
-import { waLink, mailto, CONTACT } from "@/lib/contact";
 
-const langs = ["fr","en","he"] as const;
-type Lang = typeof langs[number];
+export default async function Flights({ searchParams }: any) {
+  const from = (searchParams?.from ?? "PARIS").toUpperCase();
+  const to = (searchParams?.to ?? "TLV").toUpperCase();
+  const trip = searchParams?.trip ?? "RT";
+  const depart = searchParams?.depart ?? "";
+  const ret = searchParams?.return ?? "";
 
-const catList = ["PROMO","PESSAH","SUKKOT","SUMMER","WINTER","GENERAL","ALL"] as const;
-
-export default async function Flights({ params, searchParams }: { params: { lang: string, route: string }, searchParams: any }) {
-  const lang = (langs.includes(params.lang as Lang) ? params.lang : "fr") as Lang;
-  const t = (i18n as any)[lang];
-  const from = (searchParams.from ?? "PARIS"). toUpperCase();
-  const to = (searchParams.to ?? "TLV"). toUpperCase();
-  const routekey = `${from}_${to}`; 
-
-  const trip = searchParams.trip ?? "RT";
-  const cat = (searchParams.cat ?? "ALL").toUpperCase();
-  const depart = searchParams.depart ?? "";
-  const ret = searchParams.return ?? "";
-  const from = (searchParams.from ?? "PARIS").toUpperCase();
-const to = (searchParams.to ?? "TLV").toUpperCase();
-const routeKey = `${from}_${to}`;
-
+  const routekey = `${from}_${to}`;
 
   const sb = supabasePublic();
-  let q = sb.from("offers_flight").select("*").eq("active", true).eq("route", routekay);
 
-  if (cat !== "ALL") q = q.eq("category", cat);
-  if (trip) q = q.eq("trip", trip);
-  if (depart) q = q.eq("depart_date", depart);
-  if (trip === "RT" && ret) q = q.eq("return_date", ret);
+  let query = sb
+    .from("offers_flight")
+    .select("*")
+    .eq("active", true)
+    .eq("route", routekey);
 
-  const { data } = await q.order("priority", { ascending: false }).order("price_eur", { ascending: true });
+  if (trip) query = query.eq("trip", trip);
+  if (depart) query = query.eq("depart_date", depart);
+  if (trip === "RT" && ret) query = query.eq("return_date", ret);
 
-  const title = routekey === "TLV_PARIS" ? "TEL AVIV ⇄ PARIS" : "Paris ⇄ TEL AVIV";
+  const { data } = await query.order("price_eur", { ascending: true });
+
+  const title =
+    routekey === "TLV_PARIS"
+      ? "Tel Aviv ⇄ Paris"
+      : "Paris ⇄ Tel Aviv";
 
   return (
     <main className="container section">
-      <div style={{display:"flex", justifyContent:"space-between", alignItems:"baseline", flexWrap:"wrap", gap:10}}>
-        <h1 className="h1" style={{fontSize:28}}>{title}</h1>
-        <Link className="btn orange" href={`/${lang}/promo`}>🔥 {lang==="fr"?"Promos":"Deals"}</Link>
-      </div>
+      <h1 className="h1">{title}</h1>
 
-      <div className="card" style={{marginTop:12}}>
-        <form action="" method="get">
+      <div className="card" style={{ marginTop: 20 }}>
+        <form method="get">
           <div className="form-grid">
+
             <div>
-              <div className="label">{tripLabel(t, lang)}</div>
+              <div className="label">From</div>
+              <select name="from" className="input" defaultValue={from}>
+                <option value="PARIS">Paris</option>
+                <option value="TLV">Tel Aviv</option>
+              </select>
+            </div>
+
+            <div>
+              <div className="label">To</div>
+              <select name="to" className="input" defaultValue={to}>
+                <option value="TLV">Tel Aviv</option>
+                <option value="PARIS">Paris</option>
+              </select>
+            </div>
+
+            <div>
+              <div className="label">Type</div>
               <select name="trip" className="input" defaultValue={trip}>
-                <option value="OW">{t.oneway}</option>
-                <option value="RT">{t.roundtrip}</option>
+                <option value="OW">Aller simple</option>
+                <option value="RT">Aller-retour</option>
               </select>
             </div>
+
             <div>
-              <div className="label">{t.filter}</div>
-              <select name="cat" className="input" defaultValue={cat}>
-                <option value="ALL">{t.filter_all}</option>
-                {catList.filter(c=>c!=="ALL").map(c => <option key={c} value={c}>{c}</option>)}
-              </select>
+              <div className="label">Date départ</div>
+              <input
+                type="date"
+                name="depart"
+                className="input"
+                defaultValue={depart}
+              />
             </div>
+
             <div>
-              <div className="label">{t.depart}</div>
-              <input name="depart" className="input" type="date" defaultValue={depart} />
+              <div className="label">Date retour</div>
+              <input
+                type="date"
+                name="return"
+                className="input"
+                defaultValue={ret}
+              />
             </div>
-            <div>
-              <div className="label">{t.return}</div>
-              <input name="return" className="input" type="date" defaultValue={ret} />
-            </div>
+
           </div>
-          <div style={{marginTop:12}}>
-            <button className="btn orange" type="submit">🔎 {t.see_offers}</button>
+
+          <div style={{ marginTop: 20 }}>
+            <button className="btn orange" type="submit">
+              Voir les offres
+            </button>
           </div>
         </form>
       </div>
 
-      <div style={{marginTop:14}} className="small">{(data ?? []).length} {lang==="fr"?"offres trouvées":"offers found"}</div>
+      <div style={{ marginTop: 30 }}>
+        {(data ?? []).length === 0 && <div>Aucune offre trouvée</div>}
 
-      <div className="result" style={{marginTop:10}}>
-        {(data ?? []).map((o:any) => {
-          const msg = `Bonjour Aviel Travel, je souhaite confirmer: ${title} (${o.trip}) départ ${o.depart_date}${o.return_date ? " retour "+o.return_date : ""} — ${o.price_eur}€.`;
-          const subject = `Demande - Vol ${title} - ${o.depart_date}${o.return_date ? " / "+o.return_date : ""}`;
-          const body = `${msg}\n\nPassagers: ...\nNom: ...\nTéléphone: ...`;
-          return (
-            <div key={o.id} className="result-card">
-              <div className="result-top">
-                <div>
-                  <span className="badge">{o.category}</span>
-                  <div style={{marginTop:8, fontWeight:900}}>{title}</div>
-                  <div className="small">{o.trip} · {o.depart_date}{o.return_date ? ` → ${o.return_date}` : ""}</div>
-                  <div className="small">{noteFor(o, lang)}</div>
-                </div>
-                <div>
-                  <div className="price" style={{marginTop:0}}>{o.price_eur}€</div>
-                  <div className="btn-row">
-                    <a className="btn orange" href={waLink(msg)}>💬 WhatsApp</a>
-                    <a className="btn white" href={`tel:${CONTACT.phoneFR}`}>📞</a>
-                    <a className="btn white" href={mailto(CONTACT.emailIsrael, subject, body)}>✉️</a>
-                  </div>
-                </div>
-              </div>
+        {(data ?? []).map((o: any) => (
+          <div key={o.id} className="result-card">
+            <div style={{ fontWeight: 600 }}>{o.title}</div>
+            <div>{o.depart_date} {o.return_date ? `- ${o.return_date}` : ""}</div>
+            <div style={{ marginTop: 10, fontSize: 20 }}>
+              {o.price_eur}€
             </div>
-          )
-        })}
+          </div>
+        ))}
       </div>
     </main>
   );
-}
-
-function noteFor(o:any, lang:string){
-  if(lang==="en") return o.notes_en || "";
-  if(lang==="he") return o.notes_he || "";
-  return o.notes_fr || "";
-}
-
-function tripLabel(t:any, lang:string){
-  return lang==="fr" ? "Type de trajet" : (lang==="he" ? "סוג נסיעה" : "Trip type");
 }
