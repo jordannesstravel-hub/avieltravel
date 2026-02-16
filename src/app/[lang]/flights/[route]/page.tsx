@@ -19,7 +19,7 @@ export default async function Flights({ params, searchParams }: { params: { lang
   const ret = searchParams.return ?? "";
 
   const sb = supabasePublic();
-  let q = sb.from("offers_flights").select("*").eq("active", true).eq("route", route);
+  let q = sb.from("offers_flights").select("*").eq("active", true).in("route", route === "PARIS_TLV" ? "TLV_PARIS : PARIS_TLV");
 
   if (cat !== "ALL") q = q.eq("category", cat);
   if (trip) q = q.eq("trip", trip);
