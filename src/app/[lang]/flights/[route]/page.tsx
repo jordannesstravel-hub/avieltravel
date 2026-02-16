@@ -11,15 +11,21 @@ const catList = ["PROMO","PESSAH","SUKKOT","SUMMER","WINTER","GENERAL","ALL"] as
 export default async function Flights({ params, searchParams }: { params: { lang: string, route: string }, searchParams: any }) {
   const lang = (langs.includes(params.lang as Lang) ? params.lang : "fr") as Lang;
   const t = (i18n as any)[lang];
-  const route = params.route === "eilat" ? "PARIS_EILAT" : "PARIS_TLV";
+  const from = (searchParams.from ?? "PARIS"). toUpperCase();
+  const to = (searchParams.to ?? "TLV"). toUpperCase();
+  const routekey = `${from}_${to}`; 
 
   const trip = searchParams.trip ?? "RT";
   const cat = (searchParams.cat ?? "ALL").toUpperCase();
   const depart = searchParams.depart ?? "";
   const ret = searchParams.return ?? "";
+  const from = (searchParams.from ?? "PARIS").toUpperCase();
+const to = (searchParams.to ?? "TLV").toUpperCase();
+const routeKey = `${from}_${to}`;
+
 
   const sb = supabasePublic();
-  let q = sb.from("offers_flights").select("*").eq("active", true).in("route", route === "PARIS_TLV" ? "TLV_PARIS : PARIS_TLV");
+  let q = sb.from("offers_flights").select("*").eq("active", true).in("route", routekay);
 
   if (cat !== "ALL") q = q.eq("category", cat);
   if (trip) q = q.eq("trip", trip);
@@ -28,7 +34,7 @@ export default async function Flights({ params, searchParams }: { params: { lang
 
   const { data } = await q.order("priority", { ascending: false }).order("price_eur", { ascending: true });
 
-  const title = route === "PARIS_TLV" ? "Paris ⇄ Tel Aviv" : "Paris ⇄ Eilat";
+  const title = routekey === "TLV_PARIS" ? "TEL AVIV ⇄ PARIS" : "Paris ⇄ TEL AVIV";
 
   return (
     <main className="container section">
