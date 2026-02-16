@@ -1,380 +1,222 @@
-import i18n from "@/lib/i18n.json";
 import Link from "next/link";
-import { CONTACT, waLink } from "@/lib/contact";
-import { supabasePublic } from "@/lib/supabase";
 
-const langs = ["fr", "en", "he"] as const;
-type Lang = (typeof langs)[number];
-
-type Offer = {
-  id: number;
-  title: string | null;
-  route: string | null;
-  trip: string | null; // "RT" | "OW"
-  active: boolean | null;
-  category: string | null; // "PROMO"
-  price_eur: number | null;
-};
-
-async function getDeals() {
-  const sb = supabasePublic();
-
-  const { data: flights } = await sb
-    .from("offers_flight")
-    .select("id,title,route,trip,active,category,price_eur")
-    .eq("active", true)
-    .eq("category", "PROMO")
-    .order("priority", { ascending: false })
-    .order("price_eur", { ascending: true })
-    .limit(6);
-
-  return (flights ?? []) as Offer[];
-}
-
-function t(lang: Lang, key: keyof (typeof i18n)["fr"]) {
-  // @ts-ignore
-  return (i18n?.[lang]?.[key] ?? i18n?.fr?.[key] ?? key) as string;
-}
-
-export default async function Home({
-  params,
-}: {
-  params: Promise<{ lang: string }>;
-}) {
-  const { lang: rawLang } = await params;
-  const lang: Lang = (langs.includes(rawLang as Lang) ? rawLang : "fr") as Lang;
-
-  const deals = await getDeals();
-
+export default function HomePage() {
   return (
-    <main style={{ background: "#f6f7fb", minHeight: "100vh" }}>
+    <main className="min-h-screen bg-white">
       {/* HERO */}
-      <section
-        style={{
-          maxWidth: 1100,
-          margin: "0 auto",
-          padding: "26px 16px 10px 16px",
-        }}
-      >
+      <section className="relative">
+        {/* Background image */}
         <div
-          style={{
-            borderRadius: 18,
-            background: "white",
-            boxShadow: "0 10px 30px rgba(0,0,0,0.06)",
-            border: "1px solid rgba(0,0,0,0.06)",
-            overflow: "hidden",
-          }}
-        >
-          {/* petit bandeau promo */}
-          <div
-            style={{
-              padding: "10px 14px",
-              background:
-                "linear-gradient(90deg, rgba(255,120,80,0.95), rgba(230,90,60,0.95))",
-              color: "white",
-              fontSize: 14,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              gap: 10,
-            }}
-          >
-            <div style={{ opacity: 0.95 }}>
-              🔥 {t(lang, "promos_du_moment") ?? "Promos du moment"} —{" "}
-              {t(lang, "reponse_rapide_whatsapp") ?? "Réponse rapide WhatsApp"}
-            </div>
-            <Link
-              href={`/${lang}/promos`}
-              style={{
-                background: "rgba(255,255,255,0.2)",
-                padding: "6px 10px",
-                borderRadius: 10,
-                fontWeight: 700,
-                textDecoration: "none",
-                color: "white",
-                whiteSpace: "nowrap",
-              }}
-            >
-              {t(lang, "voir") ?? "Voir"}
-            </Link>
-          </div>
+          className="h-[360px] sm:h-[420px] md:h-[520px] w-full bg-center bg-cover"
+          style={{ backgroundImage: "url(/hero.jpg)" }}
+        />
+        {/* Overlay */}
+        <div className="absolute inset-0 bg-gradient-to-r from-blue-900/70 via-blue-900/35 to-transparent" />
 
-          {/* contenu hero */}
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "1.3fr 0.9fr",
-              gap: 18,
-              padding: 18,
-              alignItems: "stretch",
-            }}
-          >
-            {/* gauche */}
-            <div
-              style={{
-                borderRadius: 16,
-                padding: 18,
-                background:
-                  "linear-gradient(180deg, rgba(240,248,255,1), rgba(255,255,255,1))",
-                border: "1px solid rgba(0,0,0,0.05)",
-              }}
-            >
-              <h1
-                style={{
-                  margin: 0,
-                  fontSize: 28,
-                  lineHeight: 1.15,
-                  color: "#1b2b4a",
-                  display: "flex",
-                  gap: 10,
-                  alignItems: "center",
-                }}
-              >
-                ✈️ {t(lang, "hero_title") ?? "Vos vols & packages Israël au meilleur prix"}
-              </h1>
+        {/* Content */}
+        <div className="absolute inset-0">
+          <div className="mx-auto max-w-6xl px-4 h-full flex items-center">
+            <div className="text-white max-w-2xl">
+              <div className="flex items-center gap-2 text-xl sm:text-2xl font-bold">
+                <span className="text-2xl">✈️</span>
+                <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold leading-tight">
+                  Vos vols &amp; packages <br />
+                  Israël au meilleur prix
+                </h1>
+              </div>
 
-              <p style={{ margin: "10px 0 14px", color: "#4b5563" }}>
-                {t(lang, "hero_subtitle") ??
-                  "Agence discount • Rapide • Contact direct (téléphone / WhatsApp / email)"}
+              <p className="mt-3 text-white/90 text-sm sm:text-base">
+                Agence discount spécialisée Israël • Réponse rapide téléphone ou WhatsApp
               </p>
 
-              <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+              <div className="mt-6 flex flex-wrap gap-3">
                 <Link
-                  href={`/${lang}/flights/tlv`}
-                  style={btnStyle("#e85b3a")}
+                  href="/fr/flights/tlv"
+                  className="inline-flex items-center justify-center rounded-md bg-orange-500 px-5 py-3 font-semibold text-white hover:bg-orange-600 transition"
                 >
-                  🔎 {t(lang, "rechercher_un_vol") ?? "Rechercher un vol"}
+                  Rechercher un vol
                 </Link>
 
                 <Link
-                  href={`/${lang}/promos`}
-                  style={btnStyle("#d9482b", true)}
+                  href="/fr/promos"
+                  className="inline-flex items-center justify-center rounded-md bg-orange-600 px-5 py-3 font-semibold text-white hover:bg-orange-700 transition"
                 >
-                  🔥 {t(lang, "voir_les_promos") ?? "Voir les promos"}
+                  Voir les promos
                 </Link>
 
                 <a
-                  href={waLink(CONTACT.whatsapp)}
+                  href="https://wa.me/"
                   target="_blank"
                   rel="noreferrer"
-                  style={btnStyle("#17a34a")}
+                  className="inline-flex items-center justify-center rounded-md bg-green-500 px-5 py-3 font-semibold text-white hover:bg-green-600 transition"
                 >
-                  💬 {t(lang, "whatsapp_immediat") ?? "WhatsApp immédiat"}
+                  WhatsApp immédiat
                 </a>
               </div>
             </div>
+          </div>
+        </div>
+      </section>
 
-            {/* droite contact */}
-            <div
-              style={{
-                borderRadius: 16,
-                padding: 18,
-                background: "white",
-                border: "1px solid rgba(0,0,0,0.05)",
-              }}
-            >
-              <div style={{ fontWeight: 800, marginBottom: 8, color: "#1b2b4a" }}>
-                Contact rapide
-              </div>
-              <div style={{ fontSize: 14, color: "#374151", lineHeight: 1.6 }}>
-                <div>
-                  <strong>FR:</strong> {CONTACT.phone_fr}
-                </div>
-                <div>
-                  <strong>IL:</strong> {CONTACT.phone_il}
-                </div>
-                <div>
-                  <strong>WhatsApp:</strong> {CONTACT.whatsapp}
-                </div>
-                <div style={{ marginTop: 10 }}>
-                  <div>
-                    <strong>Email:</strong> {CONTACT.email_main}
-                  </div>
-                  {CONTACT.email_secondary ? (
-                    <div>
-                      <strong>Email 2:</strong> {CONTACT.email_secondary}
-                    </div>
-                  ) : null}
-                </div>
+      {/* PROMOS */}
+      <section className="mx-auto max-w-6xl px-4 py-10">
+        <h2 className="flex items-center gap-2 text-2xl font-extrabold text-blue-900">
+          <span>🔥</span> Offres Promo Disponibles
+        </h2>
 
-                <div style={{ marginTop: 12, display: "flex", gap: 10, flexWrap: "wrap" }}>
-                  <a
-                    href={waLink(CONTACT.whatsapp)}
-                    target="_blank"
-                    rel="noreferrer"
-                    style={miniBtn("#17a34a")}
-                  >
-                    WhatsApp
-                  </a>
-                  <a href={`tel:${CONTACT.phone_fr}`} style={miniBtn("#2563eb")}>
-                    Appeler
-                  </a>
-                </div>
-              </div>
+        <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-6">
+          <PromoCard
+            title="Paris → Tel Aviv"
+            price="Dès 399€"
+            img="/promo-tlv.jpg"
+            cta="WhatsApp"
+            href="https://wa.me/"
+          />
+          <PromoCard
+            title="Paris → Eilat"
+            price="Dès 449€"
+            img="/promo-eilat.jpg"
+            cta="WhatsApp"
+            href="https://wa.me/"
+          />
+          <PromoCard
+            title="Package Eilat"
+            price="Dès 799€"
+            subtitle="4 nuits / Vol + Hôtel"
+            img="/promo-package.jpg"
+            cta="WhatsApp"
+            href="https://wa.me/"
+          />
+        </div>
+      </section>
+
+      {/* SERVICES */}
+      <section className="mx-auto max-w-6xl px-4 pb-12">
+        <h2 className="text-center text-2xl font-extrabold text-blue-900">Nos Services</h2>
+
+        <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <ServiceCard title="Vols Paris ~ Tel Aviv" img="/srv-1.jpg" />
+          <ServiceCard title="Vols Paris ~ Eilat" img="/srv-2.jpg" />
+          <ServiceCard title="Package Eilat Vol + Hôtel" img="/srv-3.jpg" />
+          <ServiceCard title="Devis Location de Voiture" img="/srv-4.jpg" />
+        </div>
+      </section>
+
+      {/* WHY US */}
+      <section className="bg-gray-50 border-t">
+        <div className="mx-auto max-w-6xl px-4 py-10">
+          <h2 className="text-center text-2xl font-extrabold text-blue-900">
+            Pourquoi choisir Aviel Travel ?
+          </h2>
+
+          <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <WhyCard title="Prix discount toute l’année" icon="💰" />
+            <WhyCard title="Spécialiste Israël" icon="✈️" />
+            <WhyCard title="Réponse rapide & efficace" icon="⚡" />
+            <WhyCard title="Contact direct humain" icon="📞" />
+            <WhyCard title="Offres Pessah • Été • Souccot" icon="🔥" />
+            <WhyCard title="WhatsApp / Téléphone / Email" icon="💬" />
+          </div>
+        </div>
+      </section>
+
+      {/* CONTACT BAR */}
+      <section className="bg-orange-500">
+        <div className="mx-auto max-w-6xl px-4 py-8 text-white">
+          <h3 className="text-center text-xl font-extrabold">
+            Besoin d’une réponse rapide ?
+          </h3>
+
+          <div className="mt-5 grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
+            <div className="rounded-lg bg-white/10 p-4">
+              <div className="font-bold">📞 France</div>
+              <div className="mt-1">01 85 43 13 75</div>
+            </div>
+
+            <div className="rounded-lg bg-white/10 p-4">
+              <div className="font-bold">📞 Israël</div>
+              <div className="mt-1">+972 55 772 60 27</div>
+            </div>
+
+            <div className="rounded-lg bg-white/10 p-4">
+              <div className="font-bold">✉️ Email</div>
+              <div className="mt-1 break-all">jordan.nesstravel@gmail.com</div>
             </div>
           </div>
-
-          {/* séparation */}
-          <div style={{ height: 1, background: "rgba(0,0,0,0.06)" }} />
-
-          {/* OFFRES PROMO */}
-          <section style={{ padding: "18px 18px 6px 18px" }}>
-            <h2 style={{ margin: "6px 0 14px", color: "#1b2b4a" }}>
-              🔥 Offres promo disponibles
-            </h2>
-
-            {deals.length === 0 ? (
-              <div style={{ color: "#6b7280", paddingBottom: 12 }}>
-                Aucune promo pour le moment.
-              </div>
-            ) : (
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
-                  gap: 14,
-                  paddingBottom: 12,
-                }}
-              >
-                {deals.map((o) => (
-                  <Link
-                    key={o.id}
-                    href={`/${lang}/promos`}
-                    style={{
-                      textDecoration: "none",
-                      background: "white",
-                      borderRadius: 16,
-                      border: "1px solid rgba(0,0,0,0.06)",
-                      boxShadow: "0 8px 20px rgba(0,0,0,0.05)",
-                      padding: 14,
-                      display: "block",
-                    }}
-                  >
-                    <div style={{ fontWeight: 900, color: "#1b2b4a", marginBottom: 8 }}>
-                      {o.title ?? "Promo"}
-                    </div>
-                    <div style={{ color: "#6b7280", fontSize: 14 }}>
-                      {(o.route ?? "").replace("-", " → ")}{" "}
-                      {o.trip === "OW" ? "(Aller simple)" : "(Aller-retour)"}
-                    </div>
-                    <div
-                      style={{
-                        marginTop: 10,
-                        fontSize: 22,
-                        fontWeight: 900,
-                        color: "#e85b3a",
-                      }}
-                    >
-                      Dès {o.price_eur ?? "-"}€
-                    </div>
-                    <div
-                      style={{
-                        marginTop: 10,
-                        display: "inline-block",
-                        background: "#17a34a",
-                        color: "white",
-                        padding: "8px 12px",
-                        borderRadius: 999,
-                        fontWeight: 800,
-                        fontSize: 13,
-                      }}
-                    >
-                      WhatsApp
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            )}
-          </section>
-
-          {/* NOS SERVICES */}
-          <section style={{ padding: "8px 18px 22px 18px" }}>
-            <h2 style={{ margin: "10px 0 12px", color: "#1b2b4a" }}>
-              Nos services
-            </h2>
-
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(5, minmax(0, 1fr))",
-                gap: 12,
-              }}
-            >
-              {[
-                { title: "Vols Paris ↔ Tel Aviv", href: `/${lang}/flights/tlv` },
-                { title: "Vols Paris ↔ Eilat", href: `/${lang}/flights/eil` },
-                { title: "Package Eilat (Vol + Hôtel)", href: `/${lang}/packages/eilat` },
-                { title: "Devis Hôtel Monde", href: `/${lang}/hotels` },
-                { title: "Devis Location Voiture", href: `/${lang}/cars` },
-              ].map((s) => (
-                <Link
-                  key={s.title}
-                  href={s.href}
-                  style={{
-                    textDecoration: "none",
-                    background: "white",
-                    borderRadius: 16,
-                    border: "1px solid rgba(0,0,0,0.06)",
-                    padding: 14,
-                    color: "#1f2937",
-                    fontWeight: 800,
-                    minHeight: 70,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    textAlign: "center",
-                  }}
-                >
-                  {s.title}
-                </Link>
-              ))}
-            </div>
-          </section>
         </div>
       </section>
     </main>
   );
 }
 
-function btnStyle(bg: string, outline = false): React.CSSProperties {
-  if (outline) {
-    return {
-      display: "inline-flex",
-      alignItems: "center",
-      gap: 8,
-      padding: "10px 14px",
-      borderRadius: 999,
-      fontWeight: 800,
-      textDecoration: "none",
-      border: `2px solid ${bg}`,
-      color: bg,
-      background: "transparent",
-    };
-  }
-  return {
-    display: "inline-flex",
-    alignItems: "center",
-    gap: 8,
-    padding: "10px 14px",
-    borderRadius: 999,
-    fontWeight: 800,
-    textDecoration: "none",
-    color: "white",
-    background: bg,
-  };
+/** Components */
+
+function PromoCard({
+  title,
+  price,
+  img,
+  href,
+  cta,
+  subtitle,
+}: {
+  title: string;
+  price: string;
+  img: string;
+  href: string;
+  cta: string;
+  subtitle?: string;
+}) {
+  return (
+    <div className="overflow-hidden rounded-xl border shadow-sm bg-white">
+      <div
+        className="h-44 w-full bg-center bg-cover"
+        style={{ backgroundImage: `url(${img})` }}
+      />
+      <div className="p-5">
+        <div className="text-lg font-extrabold text-blue-900">{title}</div>
+        {subtitle ? <div className="text-sm text-gray-600 mt-1">{subtitle}</div> : null}
+        <div className="mt-2 text-2xl font-extrabold text-orange-600">{price}</div>
+
+        <a
+          href={href}
+          target="_blank"
+          rel="noreferrer"
+          className="mt-4 inline-flex w-full items-center justify-center rounded-md bg-green-500 px-4 py-2 font-semibold text-white hover:bg-green-600 transition"
+        >
+          {cta}
+        </a>
+      </div>
+    </div>
+  );
 }
 
-function miniBtn(bg: string): React.CSSProperties {
-  return {
-    display: "inline-flex",
-    alignItems: "center",
-    justifyContent: "center",
-    padding: "8px 12px",
-    borderRadius: 999,
-    fontWeight: 900,
-    textDecoration: "none",
-    color: "white",
-    background: bg,
-    fontSize: 13,
-  };
+function ServiceCard({ title, img }: { title: string; img: string }) {
+  return (
+    <div className="overflow-hidden rounded-xl border bg-white shadow-sm">
+      <div
+        className="h-36 w-full bg-center bg-cover"
+        style={{ backgroundImage: `url(${img})` }}
+      />
+      <div className="p-4 text-center">
+        <div className="font-bold text-blue-900">{title}</div>
+        <a
+          href="https://wa.me/"
+          target="_blank"
+          rel="noreferrer"
+          className="mt-3 inline-flex items-center justify-center rounded-md bg-green-500 px-4 py-2 text-sm font-semibold text-white hover:bg-green-600 transition"
+        >
+          WhatsApp
+        </a>
+      </div>
+    </div>
+  );
+}
+
+function WhyCard({ title, icon }: { title: string; icon: string }) {
+  return (
+    <div className="rounded-xl border bg-white p-5 shadow-sm">
+      <div className="text-2xl">{icon}</div>
+      <div className="mt-2 font-bold text-blue-900">{title}</div>
+    </div>
+  );
 }
