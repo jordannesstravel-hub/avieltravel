@@ -1,145 +1,93 @@
-import Link from "next/link";
-import { supabasePublic } from "@/lib/supabase";
+"use client";
 
-function toISODate(v: string) {
-  if (!v) return "";
+import { useEffect, useState } from "react";
+import { createClient } from "@supabase/supabase-js";
 
-  // Déjà au bon format: YYYY-MM-DD
-  if (/^\d{4}-\d{2}-\d{2}$/.test(v)) return v;
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
 
-  // Format français: DD/MM/YYYY -> YYYY-MM-DD
-  const m = v.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
-  if (m) return `${m[3]}-${m[2]}-${m[1]}`;
+export default function Home() {
+  const [data, setData] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Sinon on renvoie tel quel (au cas où)
-  return v;
-}
+  useEffect(() => {
+    async function fetchData() {
+      const { data, error } = await supabase
+        .from("offers_flight")
+        .select("*")
+        .order("priority", { ascending: true });
 
-export default async function Flights({ searchParams }: any) {
-  const from = (searchParams?.from ?? "PARIS").toUpperCase();
-  const to = (searchParams?.to ?? "TLV").toUpperCase();
-  const trip = (searchParams?.trip ?? "RT").toUpperCase(); // "OW" ou "RT"
-  const depart = toISODate(searchParams?.depart ?? "");
-  const ret = toISODate(searchParams?.return ?? "");
+      if (!error && data) {
+        setData(data);
+      }
 
-  const routekey = `${from}_${to}`;
+      setLoading(false);
+    }
 
-  const sb = supabasePublic();
+    fetchData();
+  }, []);
 
-  // ✅ Requête de base
-  let query = sb
-    .from("offers_flight")
-    .select("*")
-    .eq("active", true)
-    .eq("route", routekey);
-
-  // ✅ Filtres optionnels
-  if (trip) query = query.eq("trip", trip);
-
-  // ✅ IMPORTANT: dates au format YYYY-MM-DD
-  if (depart) query = query.eq("depart_date", depart);
-  if (trip === "RT" && ret) query = query.eq("return_date", ret);
-
-  const { data, error } = await query.order("price_eur", { ascending: true });
-
-  const title =
-    routekey === "TLV_PARIS" ? "Tel Aviv ⇄ Paris" : "Paris ⇄ Tel Aviv";
+  if (loading) return <div style={{ padding: 40 }}>Chargement...</div>;
 
   return (
-    <main className="container section">
-      <h1 className="h1">{title}</h1>
+    <div style={{ padding: 40, maxWidth: 800, margin: "0 auto" }}>
+      <h1 style={{ marginBottom: 30 }}>Nos offres vols</h1>
 
-      <div className="card" style={{ marginTop: 20 }}>
-        <form method="get">
-          <div className="form-grid">
-            <div>
-              <div className="label">From</div>
-              <select name="from" className="input" defaultValue={from}>
-                <option value="PARIS">Paris</option>
-                <option value="TLV">Tel Aviv</option>
-              </select>
-            </div>
+      {data.length === 0 && <div>Aucune offre disponible</div>}
 
-            <div>
-              <div className="label">To</div>
-              <select name="to" className="input" defaultValue={to}>
-                <option value="TLV">Tel Aviv</option>
-                <option value="PARIS">Paris</option>
-              </select>
-            </div>
+      {data.map((o: any) => (
+        <div
+          key={o.id}
+          style={{
+            border: "1px solid #ddd",
+            padding: 20,
+            marginBottom: 20,
+            borderRadius: 10,
+          }}
+        >
+          <h2>{o.title}</h2>
 
-            <div>
-              <div className="label">Type</div>
-              <select name="trip" className="input" defaultValue={trip}>
-                <option value="OW">Aller simple</option>
-                <option value="RT">Aller-retour</option>
-              </select>
-            </div>
-
-            <div>
-              <div className="label">Date départ</div>
-              <input
-                type="date"
-                name="depart"
-                className="input"
-                defaultValue={depart}
-              />
-            </div>
-
-            <div>
-              <div className="label">Date retour</div>
-              <input
-                type="date"
-                name="return"
-                className="input"
-                defaultValue={ret}
-              />
-            </div>
+          <div style={{ marginTop: 10 }}>
+            <strong>Compagnie :</strong> {o.ailine ?? "-"}
           </div>
 
-          <div style={{ marginTop: 20 }}>
-            <button className="btn orange" type="submit">
-              Voir les offres
-            </button>
-          </div>
-        </form>
-      </div>
-
-      <div style={{ marginTop: 30 }}>
-        {/* Affiche l'erreur Supabase si besoin */}
-        {error && (
-          <div style={{ color: "red" }}>
-            <b>Erreur Supabase :</b> {error.message}
-          </div>
-        )}
-
-        {/* Aucune offre */}
-        {!error && (!data || data.length === 0) && (
           <div>
-            Aucune offre trouvée
-            <div style={{ marginTop: 10, fontSize: 12, opacity: 0.8 }}>
-              Debug: route={routekey} / trip={trip} / depart={depart || "vide"} /
-              return={ret || "vide"}
-            </div>
+            <strong>Bagage cabine :</strong> {o.cabin_bag ?? "-"}
           </div>
-        )}
 
-        {/* Résultats */}
-        {(data ?? []).map((o: any) => (
-          <div key={o.id} className="result-card">
-            <div style={{ fontWeight: 600 }}>{o.title}</div>
-            <div>
-              {o.depart_date}
-              {o.return_date ? ` → ${o.return_date}` : ""}
-            </div>
-            <div style={{ marginTop: 10, fontSize: 20 }}>{o.price_eur}€</div>
+          <div>
+            <strong>Bagage soute :</strong> {o.checked_bag ?? "-"}
           </div>
-        ))}
 
-        <div style={{ marginTop: 20 }}>
-          <Link href="/fr">Retour</Link>
+          <div style={{ marginTop: 15 }}>
+            <strong>Aller :</strong><br />
+            Date : {o.depart_date}<br />
+            Départ : {o.depart_time
+              ? String(o.depart_time).slice(0, 5)
+              : "-"}<br />
+            Arrivée : {o.arrive_time
+              ? String(o.arrive_time).slice(0, 5)
+              : "-"}
+          </div>
+
+          <div style={{ marginTop: 15 }}>
+            <strong>Retour :</strong><br />
+            Date : {o.return_date}<br />
+            Départ : {o.return_depart_time
+              ? String(o.return_depart_time).slice(0, 5)
+              : "-"}<br />
+            Arrivée : {o.return_arrive_time
+              ? String(o.return_arrive_time).slice(0, 5)
+              : "-"}
+          </div>
+
+          <div style={{ marginTop: 20, fontSize: 22 }}>
+            <strong>{o.price_eur}€</strong>
+          </div>
         </div>
-      </div>
-    </main>
+      ))}
+    </div>
   );
 }
