@@ -25,7 +25,7 @@ const routeKey = `${from}_${to}`;
 
 
   const sb = supabasePublic();
-  let q = sb.from("offers_flights").select("*").eq("active", true).in("route", routekay);
+  let q = sb.from("offers_flights").select("*").eq("active", true).eq("route", routekay);
 
   if (cat !== "ALL") q = q.eq("category", cat);
   if (trip) q = q.eq("trip", trip);
