@@ -14,7 +14,7 @@ type OfferFlight = {
   depart_date: string | null; // YYYY-MM-DD
   return_date: string | null; // YYYY-MM-DD
 
-  price: number | null;
+  price_eur: number | null;
 
   // Détails
   airline: string | null; // ATTENTION: chez toi c'est "ailine" (faute) -> voir plus bas
@@ -87,7 +87,7 @@ export default function Page() {
       let q = supabase
         .from("offers_flight")
         .select(
-          "id,title,category,trip,route,depart_date,return_date,price,airline,ailine,cabin_bag,checked_bag,depart_time,arrive_time,return_depart_time,return_arrive_time"
+          "id,title,category,trip,route,depart_date,return_date,price_eur,airline,ailine,cabin_bag,checked_bag,depart_time,arrive_time,return_depart_time,return_arrive_time"
         )
         .eq("route", routeInfo.routeKey)
         .eq("depart_date", departDate);
@@ -99,7 +99,7 @@ export default function Page() {
         q = q.eq("trip", "OW");
       }
 
-      const { data, error } = await q.order("price_eur", { ascending: true });
+      const { data, error } = await q.order("price_eur_eur", { ascending: true });
 
       if (error) throw error;
 
@@ -265,7 +265,7 @@ export default function Page() {
                 )}
 
                 <div style={{ marginTop: 12, fontSize: 22, fontWeight: 900 }}>
-                  {o.price_eur != null ? `${o.price}€` : "-"}
+                  {o.price_eur_eur != null ? `${o.price_eur}€` : "-"}
                 </div>
               </div>
             </div>
