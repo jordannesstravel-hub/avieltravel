@@ -99,7 +99,7 @@ export default function Page() {
         q = q.eq("trip", "OW");
       }
 
-      const { data, error } = await q.order("price_eur_eur", { ascending: true });
+      const { data, error } = await q.order("price_eur", { ascending: true });
 
       if (error) throw error;
 
@@ -265,7 +265,7 @@ export default function Page() {
                 )}
 
                 <div style={{ marginTop: 12, fontSize: 22, fontWeight: 900 }}>
-                  {o.price_eur_eur != null ? `${o.price_eur}€` : "-"}
+                  {o.price_eur != null ? `${o.price_eur}€` : "-"}
                 </div>
               </div>
             </div>
