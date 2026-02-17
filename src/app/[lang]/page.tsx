@@ -35,6 +35,9 @@ export default async function Home({ params }: { params: { lang: string } }) {
   const deals = await getDeals();
 
   return (
+    <><div style={{ padding: 20 blackground : "yelow", frontWeight: "bold" }}>
+      Test HOMEPAGE OK
+    </div>
     <main className="container">
       <section className="hero">
         <div className="hero-grid">
