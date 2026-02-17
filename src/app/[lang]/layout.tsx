@@ -1,3 +1,4 @@
+import "../../globals.css";
 import i18n from "@/lib/i18n.json";
 import Link from "next/link";
 import { CONTACT, waLink } from "@/lib/contact";
