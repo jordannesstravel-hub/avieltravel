@@ -1,133 +1,121 @@
-import Link from "next/link";
 import i18n from "@/lib/i18n.json";
+import Link from "next/link";
 import { CONTACT, waLink } from "@/lib/contact";
+import { supabasePublic } from "@/lib/supabase";
 
-const langs = ["fr", "en", "he"] as const;
-type Lang = (typeof langs)[number];
+const langs = ["fr","en","he"] as const;
+type Lang = typeof langs[number];
 
-export default function HomePage({ params }: { params: { lang: string } }) {
+async function getDeals() {
+  const sb = supabasePublic();
+  const { data: flights } = await sb
+    .from("offers_flights")
+    .select("*")
+    .eq("active", true)
+    .eq("category", "PROMO")
+    .order("priority", { ascending: false })
+    .order("price_eur", { ascending: true })
+    .limit(3);
+
+  const { data: packages } = await sb
+    .from("offers_packages")
+    .select("*")
+    .eq("active", true)
+    .eq("category", "PROMO")
+    .order("priority", { ascending: false })
+    .order("price_eur", { ascending: true })
+    .limit(2);
+
+  return { flights: flights ?? [], packages: packages ?? [] };
+}
+
+export default async function Home({ params }: { params: { lang: string } }) {
   const lang = (langs.includes(params.lang as Lang) ? params.lang : "fr") as Lang;
   const t = (i18n as any)[lang];
-  const rtl = lang === "he";
+  const deals = await getDeals();
 
   return (
-    <main className={`min-h-screen bg-white ${rtl ? "rtl" : ""}`}>
-      {/* HERO */}
-      <section className="relative">
-        {/* background */}
-        <div
-          className="h-[340px] sm:h-[420px] md:h-[520px] w-full bg-center bg-cover"
-          style={{ backgroundImage: "url(/hero.jpg)" }}
-        />
-        {/* overlay */}
-        <div className="absolute inset-0 bg-gradient-to-r from-blue-900/75 via-blue-900/35 to-transparent" />
-
-        {/* content */}
-        <div className="absolute inset-0">
-          <div className="mx-auto max-w-6xl px-4 h-full flex items-center">
-            <div className="w-full">
-              <div className="inline-flex items-center gap-2 rounded-full bg-orange-500/90 text-white px-4 py-2 text-sm shadow">
-                🔥 {t.banner}
-              </div>
-
-              <h1 className="mt-4 text-white text-3xl sm:text-4xl md:text-5xl font-extrabold leading-tight">
-                {t.heroTitle}
-              </h1>
-
-              <p className="mt-3 text-white/90 max-w-2xl">
-                {t.heroSub}
-              </p>
-
-              {/* buttons */}
-              <div className="mt-6 flex flex-wrap gap-3">
-                <Link
-                  href={`/${lang}/flights/tlv`}
-                  className="rounded-xl bg-orange-500 text-white px-5 py-3 font-semibold shadow hover:opacity-90"
-                >
-                  ✈️ {t.ctaSearch}
-                </Link>
-
-                <Link
-                  href={`/${lang}/promo`}
-                  className="rounded-xl bg-white/95 text-blue-900 px-5 py-3 font-semibold shadow hover:bg-white"
-                >
-                  🔥 {t.ctaPromo}
-                </Link>
-
-                <a
-                  href={waLink("Bonjour Aviel Travel, je souhaite une réponse rapide.")}
-                  className="rounded-xl bg-green-600 text-white px-5 py-3 font-semibold shadow hover:opacity-90"
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  💬 WhatsApp
-                </a>
-              </div>
+    <main className="container">
+      <section className="hero">
+        <div className="hero-grid">
+          <div className="card">
+            <h1 className="h1">{t.hero_title}</h1>
+            <p className="sub">{t.hero_sub}</p>
+            <div className="btn-row">
+              <Link className="btn orange" href={`/${lang}/flights/tlv`}>🔎 {t.cta_search}</Link>
+              <Link className="btn white" href={`/${lang}/promo`}>🔥 {t.cta_promos}</Link>
+              <a className="btn orange" href={waLink("Bonjour Aviel Travel, je veux une offre promo. / Hello, I want a deal. / שלום, אני רוצה מבצע.")}>💬 {t.cta_wa}</a>
             </div>
+          </div>
+
+          <div className="card">
+            <h2 style={{margin:"0 0 10px"}}>{t.contact_title}</h2>
+            <div className="small">FR: <a href={`tel:${CONTACT.phoneFR}`}>{process.env.NEXT_PUBLIC_PHONE_FR_DISPLAY ?? "01 85 43 13 75"}</a></div>
+            <div className="small">IL: <a href={`tel:${CONTACT.phoneIL1}`}>+972 55 772 6027</a> · <a href={`tel:${CONTACT.phoneIL2}`}>+972 55 966 1683</a></div>
+            <div className="small">WhatsApp: <a href={waLink("Bonjour Aviel Travel")}>{process.env.NEXT_PUBLIC_WHATSAPP_DISPLAY ?? "06 11 09 07 31"}</a></div>
+            <div className="small">Email Israël: <a href={`mailto:${CONTACT.emailIsrael}`}>{CONTACT.emailIsrael}</a></div>
+            <div className="small">Email Devis monde: <a href={`mailto:${CONTACT.emailWorld}`}>{CONTACT.emailWorld}</a></div>
           </div>
         </div>
       </section>
 
-      {/* CONTENT */}
-      <section className="mx-auto max-w-6xl px-4 -mt-14 pb-14">
-        <div className="grid md:grid-cols-3 gap-4">
-          {/* main card */}
-          <div className="md:col-span-2 rounded-2xl bg-white shadow-lg border p-5">
-            <h2 className="text-xl font-bold">{t.sectionTitle}</h2>
-            <p className="text-gray-600 mt-2">{t.sectionText}</p>
-
-            <div className="mt-5 grid sm:grid-cols-2 gap-3">
-              <div className="rounded-xl border p-4">
-                <div className="font-semibold">Paris → Tel Aviv</div>
-                <div className="text-gray-600">{t.from} 399€</div>
-                <a
-                  className="inline-block mt-2 text-blue-700 font-semibold"
-                  href={waLink("Bonjour Aviel Travel, je veux un prix pour Paris → Tel Aviv")}
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  WhatsApp →
-                </a>
-              </div>
-
-              <div className="rounded-xl border p-4">
-                <div className="font-semibold">Paris → Eilat</div>
-                <div className="text-gray-600">{t.from} 449€</div>
-                <a
-                  className="inline-block mt-2 text-blue-700 font-semibold"
-                  href={waLink("Bonjour Aviel Travel, je veux un prix pour Paris → Eilat")}
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  WhatsApp →
-                </a>
-              </div>
+      <section className="section">
+        <h2>{t.deals_title}</h2>
+        <div className="deals">
+          {deals.flights.map((o:any) => (
+            <div key={o.id} className="deal">
+              <span className="badge">PROMO</span>
+              <div style={{marginTop:8, fontWeight:900}}>{o.route === "PARIS_TLV" ? "Paris ⇄ Tel Aviv" : "Paris ⇄ Eilat"}</div>
+              <div className="small">{o.trip === "OW" ? "OW" : "RT"} · {o.depart_date}{o.return_date ? ` → ${o.return_date}` : ""}</div>
+              <div className="price">{o.price_eur}€</div>
+              <a className="btn orange" href={waLink(`Bonjour Aviel Travel, offre PROMO: ${o.route} ${o.trip} départ ${o.depart_date}${o.return_date ? " retour "+o.return_date : ""}.`)}>💬 WhatsApp</a>
             </div>
-          </div>
-
-          {/* contact card */}
-          <div className="rounded-2xl bg-white shadow-lg border p-5">
-            <h3 className="text-lg font-bold">{t.quickContact}</h3>
-
-            <div className="mt-3 text-sm text-gray-700 space-y-2">
-              <div>📞 FR : <a className="text-blue-700" href={`tel:${CONTACT.phoneFR}`}>{CONTACT.phoneFR}</a></div>
-              <div>📞 IL : <a className="text-blue-700" href={`tel:${CONTACT.phoneIL1}`}>{CONTACT.phoneIL1}</a></div>
-              <div>💬 WhatsApp : <a className="text-blue-700" href={waLink("Bonjour Aviel Travel")} target="_blank" rel="noreferrer">ouvrir</a></div>
-              <div>✉️ Israel : <span className="text-gray-600">{CONTACT.emailIsrael}</span></div>
-              <div>✉️ Monde : <span className="text-gray-600">{CONTACT.emailWorld}</span></div>
+          ))}
+          {deals.packages.map((p:any) => (
+            <div key={p.id} className="deal">
+              <span className="badge">PROMO</span>
+              <div style={{marginTop:8, fontWeight:900}}>Package Eilat</div>
+              <div className="small">{p.hotel_name} · {p.nights}N · {p.depart_date}</div>
+              <div className="price">{p.price_eur}€</div>
+              <a className="btn orange" href={waLink(`Bonjour Aviel Travel, package PROMO Eilat: départ ${p.depart_date}, ${p.nights} nuits, hôtel ${p.hotel_name}.`)}>💬 WhatsApp</a>
             </div>
+          ))}
+        </div>
+      </section>
 
-            <a
-              href={waLink("Bonjour Aviel Travel, je souhaite une réponse rapide.")}
-              target="_blank"
-              rel="noreferrer"
-              className="mt-4 block text-center rounded-xl bg-orange-500 text-white px-4 py-3 font-semibold shadow hover:opacity-90"
-            >
-              Réponse rapide WhatsApp
-            </a>
-          </div>
+      <section className="section">
+        <h2>{t.choices_title}</h2>
+        <div className="grid5">
+          <Link className="tile" href={`/${lang}/flights/tlv`}>
+            <h3>✈️ {t.menu.tlv}</h3><p>Paris ⇄ TLV</p>
+          </Link>
+          <Link className="tile" href={`/${lang}/flights/eilat`}>
+            <h3>🏖 {t.menu.eilat}</h3><p>Paris ⇄ Eilat</p>
+          </Link>
+          <Link className="tile" href={`/${lang}/packages/eilat`}>
+            <h3>🏨 {t.menu.pkg}</h3><p>Vol + Hôtel</p>
+          </Link>
+          <Link className="tile" href={`/${lang}/quotes/hotel`}>
+            <h3>🌍 {t.menu.hotel}</h3><p>Sur demande</p>
+          </Link>
+          <Link className="tile" href={`/${lang}/quotes/car`}>
+            <h3>🚗 {t.menu.car}</h3><p>Sur demande</p>
+          </Link>
+        </div>
+      </section>
+
+      <section className="section">
+        <h2>{t.why_title}</h2>
+        <div className="card">
+          <ul style={{margin:0, paddingInlineStart: rtlListPad(lang), lineHeight:1.9}}>
+            {t.why_points.map((x:string, i:number) => <li key={i}>{x}</li>)}
+          </ul>
         </div>
       </section>
     </main>
   );
+}
+
+function rtlListPad(lang:string){
+  return lang==="he" ? "18px" : "20px";
 }
